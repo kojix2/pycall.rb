@@ -35,43 +35,26 @@ end
 
 Dir[File.expand_path('../tasks/**/*.rake', __FILE__)].each {|f| load f }
 
-spec.extensions.each do |extension|
-  extension_dir = File.join(base_dir, File.dirname(extension))
-  build_dir = ENV["BUILD_DIR"]
-  if build_dir
-    build_dir = File.join(build_dir, "pycall")
-    directory build_dir
-  else
-    build_dir = extension_dir
-  end
+require "rake/extensiontask"
 
-  makefile = File.join(build_dir, "Makefile")
-  file makefile => build_dir do
-    run_extconf(build_dir, extension_dir)
-  end
-
-  CLOBBER << makefile
-  CLOBBER << File.join(build_dir, "mkmf.log")
-
-  desc "Configure"
-  task configure: makefile
-
-  desc "Compile"
-  task compile: makefile do
-    cd(build_dir) do
-      sh(make_command)
-    end
-  end
-
-  task :clean do
-    cd(build_dir) do
-      sh(make_command, "clean") if File.exist?("Makefile")
-    end
+# ExtensionTask for the main pycall extension module
+Rake::ExtensionTask.new("pycall") do |ext|
+  ext.lib_dir = "lib/pycall/ext"
+  ext.ext_dir = "ext/pycall"
+  
+  # Support for BUILD_DIR environment variable
+  if ENV["BUILD_DIR"]
+    ext.tmp_dir = ENV["BUILD_DIR"]
   end
 end
 
-require "rake/extensiontask"
-Rake::ExtensionTask.new("pycall/spec_helper")
+# ExtensionTask for spec_helper
+Rake::ExtensionTask.new("pycall/spec_helper") do |ext|
+  # Support for BUILD_DIR environment variable
+  if ENV["BUILD_DIR"]
+    ext.tmp_dir = ENV["BUILD_DIR"]
+  end
+end
 
 desc "Run tests"
 task :test do
