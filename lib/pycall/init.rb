@@ -36,7 +36,14 @@ module PyCall
       attr_reader :handle
     end
 
-    require 'pycall.so'
+    # Try to load the extension module from different locations
+    begin
+      # In development environment, load directly from ext/pycall/pycall.so
+      require_relative '../../ext/pycall/pycall.so'
+    rescue LoadError
+      # When installed as a gem, load from lib/pycall/ext/pycall.so
+      require_relative 'ext/pycall'
+    end
 
     PyCall.sys.path.append(File.expand_path('../python', __FILE__))
 
